@@ -21,9 +21,12 @@ var styles := [
 ]
 
 func _ready() -> void:
-	world_ref = get_tree().get_first_node_in_group("world_manager")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_update_style_label()
+	call_deferred("_resolve_world")
+
+func _resolve_world() -> void:
+	world_ref = get_tree().get_first_node_in_group("world_manager")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not enabled:
@@ -40,6 +43,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _physics_process(delta: float) -> void:
+	if world_ref == null:
+		_resolve_world()
+
 	if attack_cooldown > 0.0:
 		attack_cooldown -= delta
 
@@ -51,18 +57,29 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
-	if _consume_action("jump") and is_on_floor():
+	if _jump_pressed() and is_on_floor():
 		velocity.y = jump_velocity
 
-	if _consume_action("switch_style"):
+	if _style_pressed():
 		style_index = (style_index + 1) % styles.size()
 		_update_style_label()
 		if world_ref:
 			world_ref.show_info("Dövüş stili: %s" % styles[style_index]["name"])
 
-	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_vector := Vector2.ZERO
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		input_vector.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		input_vector.x += 1.0
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+		input_vector.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+		input_vector.y += 1.0
+	if input_vector.length() > 1.0:
+		input_vector = input_vector.normalized()
+
 	if world_ref:
-		var mobile_vec = world_ref.get_move_input()
+		var mobile_vec: Vector2 = world_ref.get_move_input()
 		if mobile_vec.length() > input_vector.length():
 			input_vector = mobile_vec
 
@@ -77,12 +94,32 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
 
 	if attack_cooldown <= 0.0:
-		if _consume_action("attack_light"):
+		if _light_attack_pressed():
 			_perform_attack(styles[style_index]["light_damage"], styles[style_index]["range"], false)
-		elif _consume_action("attack_heavy"):
+		elif _heavy_attack_pressed():
 			_perform_attack(styles[style_index]["heavy_damage"], styles[style_index]["range"] + 0.3, true)
 
 	move_and_slide()
+
+func _jump_pressed() -> bool:
+	if Input.is_key_pressed(KEY_SPACE):
+		return true
+	return world_ref != null and world_ref.consume_ui_action("jump")
+
+func _style_pressed() -> bool:
+	if Input.is_key_pressed(KEY_Q) or Input.is_key_pressed(KEY_TAB):
+		return Input.is_action_just_pressed("switch_style")
+	return world_ref != null and world_ref.consume_ui_action("switch_style")
+
+func _light_attack_pressed() -> bool:
+	if Input.is_key_pressed(KEY_J):
+		return true
+	return world_ref != null and world_ref.consume_ui_action("attack_light")
+
+func _heavy_attack_pressed() -> bool:
+	if Input.is_key_pressed(KEY_K):
+		return true
+	return world_ref != null and world_ref.consume_ui_action("attack_heavy")
 
 func _perform_attack(damage: int, attack_range: float, heavy: bool) -> void:
 	attack_cooldown = 0.55 if heavy else 0.28
@@ -91,24 +128,14 @@ func _perform_attack(damage: int, attack_range: float, heavy: bool) -> void:
 
 	var forward := -global_transform.basis.z
 	for node in get_tree().get_nodes_in_group("damageable"):
-		if node == self:
-			continue
-		if not node.has_method("take_damage"):
+		if node == self or not node.has_method("take_damage"):
 			continue
 		var offset: Vector3 = node.global_position - global_position
 		offset.y = 0.0
 		if offset.length() > attack_range or offset.length() < 0.01:
 			continue
-		var facing := forward.dot(offset.normalized())
-		if facing > 0.1:
+		if forward.dot(offset.normalized()) > 0.1:
 			node.take_damage(damage)
-
-func _consume_action(action_name: String) -> bool:
-	if Input.is_action_just_pressed(action_name):
-		return true
-	if world_ref and world_ref.consume_ui_action(action_name):
-		return true
-	return false
 
 func _update_style_label() -> void:
 	if style_label:
