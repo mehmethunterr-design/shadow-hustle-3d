@@ -1,102 +1,158 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/character_rig.gd" id="1_rig"]
 [ext_resource type="PackedScene" path="res://SM_Human_Skeleton.fbx" id="2_skeleton"]
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
-radius = 0.43
-height = 1.45
-
-[sub_resource type="SphereMesh" id="SphereMesh_head"]
+[sub_resource type="CapsuleMesh" id="Capsule_torso"]
 radius = 0.34
-height = 0.68
+height = 1.05
 
-[sub_resource type="BoxMesh" id="BoxMesh_mask"]
-size = Vector3(0.62, 0.22, 0.18)
+[sub_resource type="SphereMesh" id="Sphere_head"]
+radius = 0.30
+height = 0.60
 
-[sub_resource type="BoxMesh" id="BoxMesh_shoulder"]
-size = Vector3(0.36, 0.18, 0.5)
+[sub_resource type="CapsuleMesh" id="Capsule_limb"]
+radius = 0.105
+height = 0.72
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_sword"]
-top_radius = 0.045
-bottom_radius = 0.045
-height = 1.25
+[sub_resource type="CapsuleMesh" id="Capsule_leg"]
+radius = 0.13
+height = 0.84
 
-[sub_resource type="StandardMaterial3D" id="Material_dark"]
-albedo_color = Color(0.055, 0.06, 0.08, 1)
-metallic = 0.12
-roughness = 0.58
+[sub_resource type="BoxMesh" id="Box_armor"]
+size = Vector3(0.78, 0.42, 0.36)
 
-[sub_resource type="StandardMaterial3D" id="Material_red"]
-albedo_color = Color(0.82, 0.035, 0.055, 1)
-emission_enabled = true
-emission = Color(0.35, 0.005, 0.01, 1)
-emission_energy_multiplier = 1.4
-roughness = 0.42
+[sub_resource type="BoxMesh" id="Box_mask"]
+size = Vector3(0.48, 0.18, 0.16)
 
-[sub_resource type="SphereMesh" id="SphereMesh_flash"]
-radius = 0.9
-height = 1.8
+[sub_resource type="BoxMesh" id="Box_eye"]
+size = Vector3(0.12, 0.035, 0.03)
+
+[sub_resource type="CylinderMesh" id="Cylinder_blade"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 1.20
+
+[sub_resource type="BoxMesh" id="Box_scarf"]
+size = Vector3(0.18, 0.72, 0.08)
+
+[sub_resource type="SphereMesh" id="Sphere_flash"]
+radius = 0.72
+height = 1.44
 radial_segments = 16
 rings = 8
 
-[sub_resource type="StandardMaterial3D" id="Material_flash"]
+[sub_resource type="StandardMaterial3D" id="Mat_dark"]
+albedo_color = Color(0.045, 0.05, 0.07, 1)
+metallic = 0.18
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Mat_red"]
+albedo_color = Color(0.9, 0.035, 0.055, 1)
+emission_enabled = true
+emission = Color(0.55, 0.01, 0.02, 1)
+emission_energy_multiplier = 1.8
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Mat_flash"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(1, 0.04, 0.07, 0.38)
+albedo_color = Color(1, 0.02, 0.04, 0.33)
 emission_enabled = true
-emission = Color(1, 0.02, 0.04, 1)
-emission_energy_multiplier = 2.4
+emission = Color(1, 0.01, 0.025, 1)
+emission_energy_multiplier = 2.5
 
 [node name="CharacterRig" type="Node3D"]
 script = ExtResource("1_rig")
 
 [node name="ImportedSkeleton" parent="." instance=ExtResource("2_skeleton")]
+visible = false
 
 [node name="FallbackNinja" type="Node3D" parent="."]
 
-[node name="Body" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(0, 0.82, 0)
-mesh = SubResource("CapsuleMesh_body")
-material_override = SubResource("Material_dark")
+[node name="Torso" type="MeshInstance3D" parent="FallbackNinja"]
+position = Vector3(0, 1.05, 0)
+mesh = SubResource("Capsule_torso")
+material_override = SubResource("Mat_dark")
+
+[node name="ChestArmor" type="MeshInstance3D" parent="FallbackNinja"]
+position = Vector3(0, 1.26, -0.04)
+mesh = SubResource("Box_armor")
+material_override = SubResource("Mat_dark")
 
 [node name="Head" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(0, 1.75, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_dark")
+position = Vector3(0, 1.86, 0)
+mesh = SubResource("Sphere_head")
+material_override = SubResource("Mat_dark")
 
 [node name="MaskAccent" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(0, 1.67, -0.28)
-mesh = SubResource("BoxMesh_mask")
-material_override = SubResource("Material_red")
+position = Vector3(0, 1.77, -0.275)
+mesh = SubResource("Box_mask")
+material_override = SubResource("Mat_red")
 
-[node name="ShoulderLeft" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(-0.43, 1.25, 0)
-rotation_degrees = Vector3(0, 0, -18)
-mesh = SubResource("BoxMesh_shoulder")
-material_override = SubResource("Material_dark")
+[node name="EyeAccentLeft" type="MeshInstance3D" parent="FallbackNinja"]
+position = Vector3(-0.105, 1.92, -0.293)
+mesh = SubResource("Box_eye")
+material_override = SubResource("Mat_red")
 
-[node name="ShoulderRight" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(0.43, 1.25, 0)
-rotation_degrees = Vector3(0, 0, 18)
-mesh = SubResource("BoxMesh_shoulder")
-material_override = SubResource("Material_dark")
+[node name="EyeAccentRight" type="MeshInstance3D" parent="FallbackNinja"]
+position = Vector3(0.105, 1.92, -0.293)
+mesh = SubResource("Box_eye")
+material_override = SubResource("Mat_red")
 
-[node name="SwordLeft" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(-0.28, 1.3, 0.18)
-rotation_degrees = Vector3(38, 0, -18)
-mesh = SubResource("CylinderMesh_sword")
-material_override = SubResource("Material_red")
+[node name="LeftArmPivot" type="Node3D" parent="FallbackNinja"]
+position = Vector3(-0.47, 1.34, 0)
 
-[node name="SwordRight" type="MeshInstance3D" parent="FallbackNinja"]
-position = Vector3(0.28, 1.3, 0.18)
-rotation_degrees = Vector3(38, 0, 18)
-mesh = SubResource("CylinderMesh_sword")
-material_override = SubResource("Material_red")
+[node name="Arm" type="MeshInstance3D" parent="FallbackNinja/LeftArmPivot"]
+position = Vector3(0, -0.30, 0)
+mesh = SubResource("Capsule_limb")
+material_override = SubResource("Mat_dark")
+
+[node name="BladeAccent" type="MeshInstance3D" parent="FallbackNinja/LeftArmPivot"]
+position = Vector3(-0.08, -0.12, -0.42)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("Cylinder_blade")
+material_override = SubResource("Mat_red")
+
+[node name="RightArmPivot" type="Node3D" parent="FallbackNinja"]
+position = Vector3(0.47, 1.34, 0)
+
+[node name="Arm" type="MeshInstance3D" parent="FallbackNinja/RightArmPivot"]
+position = Vector3(0, -0.30, 0)
+mesh = SubResource("Capsule_limb")
+material_override = SubResource("Mat_dark")
+
+[node name="BladeAccent" type="MeshInstance3D" parent="FallbackNinja/RightArmPivot"]
+position = Vector3(0.08, -0.12, -0.42)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("Cylinder_blade")
+material_override = SubResource("Mat_red")
+
+[node name="LeftLegPivot" type="Node3D" parent="FallbackNinja"]
+position = Vector3(-0.20, 0.65, 0)
+
+[node name="Leg" type="MeshInstance3D" parent="FallbackNinja/LeftLegPivot"]
+position = Vector3(0, -0.36, 0)
+mesh = SubResource("Capsule_leg")
+material_override = SubResource("Mat_dark")
+
+[node name="RightLegPivot" type="Node3D" parent="FallbackNinja"]
+position = Vector3(0.20, 0.65, 0)
+
+[node name="Leg" type="MeshInstance3D" parent="FallbackNinja/RightLegPivot"]
+position = Vector3(0, -0.36, 0)
+mesh = SubResource("Capsule_leg")
+material_override = SubResource("Mat_dark")
+
+[node name="Scarf" type="MeshInstance3D" parent="FallbackNinja"]
+position = Vector3(0.24, 1.53, 0.18)
+rotation_degrees = Vector3(22, 0, -18)
+mesh = SubResource("Box_scarf")
+material_override = SubResource("Mat_red")
 
 [node name="AttackFlash" type="MeshInstance3D" parent="."]
-position = Vector3(0, 1.05, -1.15)
-scale = Vector3(1.1, 0.42, 1.65)
-mesh = SubResource("SphereMesh_flash")
-material_override = SubResource("Material_flash")
+position = Vector3(0, 1.05, -1.05)
+scale = Vector3(1.0, 0.32, 1.4)
+mesh = SubResource("Sphere_flash")
+material_override = SubResource("Mat_flash")
 visible = false
