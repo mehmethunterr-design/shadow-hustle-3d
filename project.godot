@@ -18,6 +18,8 @@ config/features=PackedStringArray("4.7")
 
 PauseManager="*res://scripts/pause_manager.gd"
 OpenWorldBuilder="*res://scripts/open_world_builder.gd"
+BeehaveGlobalMetrics="*uid://c3ktl6ontsdt7"
+BeehaveGlobalDebugger="*uid://bl3ma400hpvsh"
 
 [display]
 
@@ -25,6 +27,10 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/beehave-godot-4.x/addons/beehave/plugin.cfg", "res://addons/terrain_3d/plugin.cfg")
 
 [filesystem]
 
