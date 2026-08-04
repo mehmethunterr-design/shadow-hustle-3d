@@ -1,6 +1,8 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+[ext_resource type="PackedScene" path="res://addons/kaykit_character_pack_adventures/Characters/gltf/Rogue.glb" id="2_rogue"]
+[ext_resource type="Script" path="res://scripts/npc_visual.gd" id="3_visual"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_npc"]
 radius = 0.45
@@ -18,9 +20,16 @@ height = 0.66
 script = ExtResource("1_npc")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.72, 0)
 shape = SubResource("CapsuleShape_npc")
 
+[node name="RogueVisual" parent="." instance=ExtResource("2_rogue")]
+position = Vector3(0, -0.48, 0)
+rotation_degrees = Vector3(0, 180, 0)
+script = ExtResource("3_visual")
+
 [node name="Visuals" type="Node3D" parent="."]
+visible = false
 
 [node name="Body" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0, 0.78, 0)
@@ -31,7 +40,7 @@ position = Vector3(0, 1.72, 0)
 mesh = SubResource("SphereMesh_head")
 
 [node name="NameTag" type="Label3D" parent="."]
-position = Vector3(0, 2.6, 0)
+position = Vector3(0, 2.55, 0)
 billboard = 1
 modulate = Color(1, 1, 1, 0.92)
 text = "NPC"

@@ -1,16 +1,16 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene format=3 uid="uid://d1b4eioluijon"]
 
-[ext_resource type="Script" path="res://scripts/world.gd" id="1_world"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
-[ext_resource type="Script" path="res://scripts/vehicle_car.gd" id="3_car"]
-[ext_resource type="Script" path="res://scripts/vehicle_bike.gd" id="4_bike"]
-[ext_resource type="Script" path="res://scripts/virtual_joystick.gd" id="5_joy"]
+[ext_resource type="Script" uid="uid://b0tvonqyrrjq5" path="res://scripts/world.gd" id="1_world"]
+[ext_resource type="Script" uid="uid://bkbn6e14cglio" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Script" uid="uid://bwgxtb454wgxd" path="res://scripts/vehicle_car.gd" id="3_car"]
+[ext_resource type="Script" uid="uid://6xt5s7sqq67n" path="res://scripts/vehicle_bike.gd" id="4_bike"]
+[ext_resource type="Script" uid="uid://dbl4j33amqctr" path="res://scripts/virtual_joystick.gd" id="5_joy"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
 background_color = Color(0.53, 0.76, 0.95, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.86, 0.90, 1, 1)
+ambient_light_color = Color(0.86, 0.9, 1, 1)
 ambient_light_energy = 0.7
 
 [sub_resource type="BoxMesh" id="BoxMesh_ground"]
@@ -31,153 +31,209 @@ height = 1.55
 radius = 0.34
 height = 0.68
 
+[sub_resource type="BoxMesh" id="BoxMesh_car_roof"]
+size = Vector3(2.1, 0.7, 2.2)
+
 [sub_resource type="BoxShape3D" id="BoxShape_car"]
 size = Vector3(2.7, 1.2, 4.6)
 
 [sub_resource type="BoxMesh" id="BoxMesh_car_body"]
 size = Vector3(2.6, 0.9, 4.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_car_roof"]
-size = Vector3(2.1, 0.7, 2.2)
-
 [sub_resource type="BoxShape3D" id="BoxShape_bike"]
 size = Vector3(1.2, 1.3, 2.8)
 
 [sub_resource type="BoxMesh" id="BoxMesh_bike_body"]
-size = Vector3(0.8, 0.65, 2.0)
+size = Vector3(0.8, 0.65, 2)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
 top_radius = 0.32
 bottom_radius = 0.32
 height = 0.28
 
-[node name="Main" type="Node3D"]
+[sub_resource type="Gradient" id="Gradient_lquwl"]
+offsets = PackedFloat32Array(0.2, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_7mycd"]
+noise_type = 2
+frequency = 0.03
+cellular_jitter = 3.0
+cellular_return_type = 0
+domain_warp_enabled = true
+domain_warp_type = 1
+domain_warp_amplitude = 50.0
+domain_warp_fractal_type = 2
+domain_warp_fractal_lacunarity = 1.5
+domain_warp_fractal_gain = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_272bh"]
+noise = SubResource("FastNoiseLite_7mycd")
+color_ramp = SubResource("Gradient_lquwl")
+seamless = true
+
+[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5vw27"]
+_shader_parameters = {
+&"bias_distance": null,
+&"blend_sharpness": null,
+&"depth_blur": null,
+&"enable_macro_variation": null,
+&"enable_projection": null,
+&"flat_terrain_normals": null,
+&"macro_variation1": null,
+&"macro_variation2": null,
+&"macro_variation_slope": null,
+&"mipmap_bias": null,
+&"noise1_angle": null,
+&"noise1_offset": null,
+&"noise1_scale": null,
+&"noise2_scale": null,
+&"noise_texture": SubResource("NoiseTexture2D_272bh"),
+&"projection_threshold": null
+}
+show_checkered = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kek77"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_4c57u"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_kek77")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DAssets" id="Terrain3DAssets_efxa6"]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_4c57u")])
+
+[node name="Main" type="Node3D" unique_id=398105955]
 script = ExtResource("1_world")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=25993419]
 environment = SubResource("Environment_main")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -35, 0)
-shadow_enabled = true
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1944341287]
+transform = Transform3D(0.81915206, 0.45198438, -0.35312894, 0, 0.6156615, 0.7880107, 0.57357645, -0.6455006, 0.5043204, 0, 0, 0)
 light_energy = 1.15
+shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="Ground" type="StaticBody3D" parent="." unique_id=674071725]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-position = Vector3(0, -0.5, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1001345489]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 mesh = SubResource("BoxMesh_ground")
+metadata/_edit_lock_ = true
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-position = Vector3(0, -0.5, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=61085747]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape_ground")
 
-[node name="CityContainer" type="Node3D" parent="."]
+[node name="CityContainer" type="Node3D" parent="." unique_id=1092406697]
 
-[node name="NpcContainer" type="Node3D" parent="."]
+[node name="NpcContainer" type="Node3D" parent="." unique_id=1436668268]
 
-[node name="Player" type="CharacterBody3D" parent="."]
-position = Vector3(0, 1.2, 10)
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1105788692]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 10)
 script = ExtResource("2_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=1016530828]
 shape = SubResource("CapsuleShape_player")
 
-[node name="Body" type="MeshInstance3D" parent="Player"]
-position = Vector3(0, 0.85, 0)
+[node name="Body" type="MeshInstance3D" parent="Player" unique_id=1917385650]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 mesh = SubResource("CapsuleMesh_player")
 
-[node name="Head" type="MeshInstance3D" parent="Player"]
-position = Vector3(0, 1.82, 0)
+[node name="Head" type="MeshInstance3D" parent="Player" unique_id=1459128835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.82, 0)
 mesh = SubResource("SphereMesh_head")
 
-[node name="Mask" type="MeshInstance3D" parent="Player"]
-position = Vector3(0, 1.73, 0.23)
-scale = Vector3(0.9, 0.28, 0.2)
+[node name="Mask" type="MeshInstance3D" parent="Player" unique_id=1074955609]
+transform = Transform3D(0.9, 0, 0, 0, 0.28, 0, 0, 0, 0.2, 0, 1.73, 0.23)
 mesh = SubResource("BoxMesh_car_roof")
 
-[node name="StyleLabel" type="Label3D" parent="Player"]
-position = Vector3(0, 2.65, 0)
+[node name="StyleLabel" type="Label3D" parent="Player" unique_id=952067224]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
 billboard = 1
-font_size = 26
 modulate = Color(1, 0.3, 0.3, 0.95)
 text = "Ninja"
+font_size = 26
 
-[node name="CameraPivot" type="Node3D" parent="Player"]
-position = Vector3(0, 1.3, 0)
-rotation_degrees = Vector3(-12, 0, 0)
+[node name="CameraPivot" type="Node3D" parent="Player" unique_id=889191395]
+transform = Transform3D(1, 0, 0, 0, 0.9781476, 0.2079117, 0, -0.2079117, 0.9781476, 0, 1.3, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot" unique_id=296510773]
 spring_length = 6.3
 margin = 0.2
 
-[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D" unique_id=1965301436]
 current = true
 fov = 72.0
 
-[node name="Car" type="CharacterBody3D" parent="."]
-position = Vector3(26, 1.0, 24)
+[node name="Car" type="CharacterBody3D" parent="." unique_id=1360058480]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 1, 24)
 script = ExtResource("3_car")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Car"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Car" unique_id=949751459]
 shape = SubResource("BoxShape_car")
 
-[node name="Body" type="MeshInstance3D" parent="Car"]
-position = Vector3(0, 0.6, 0)
+[node name="Body" type="MeshInstance3D" parent="Car" unique_id=495469837]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 mesh = SubResource("BoxMesh_car_body")
 
-[node name="Roof" type="MeshInstance3D" parent="Car"]
-position = Vector3(0, 1.25, -0.2)
+[node name="Roof" type="MeshInstance3D" parent="Car" unique_id=2131587086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -0.2)
 mesh = SubResource("BoxMesh_car_roof")
 
-[node name="CameraPivot" type="Node3D" parent="Car"]
-position = Vector3(0, 1.4, 0)
-rotation_degrees = Vector3(-10, 0, 0)
+[node name="CameraPivot" type="Node3D" parent="Car" unique_id=834930838]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.4, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="Car/CameraPivot"]
+[node name="SpringArm3D" type="SpringArm3D" parent="Car/CameraPivot" unique_id=1646887006]
 spring_length = 7.0
 margin = 0.2
 
-[node name="Camera3D" type="Camera3D" parent="Car/CameraPivot/SpringArm3D"]
-current = false
+[node name="Camera3D" type="Camera3D" parent="Car/CameraPivot/SpringArm3D" unique_id=1517760995]
 fov = 76.0
 
-[node name="Bike" type="CharacterBody3D" parent="."]
-position = Vector3(-28, 1.0, -24)
+[node name="Bike" type="CharacterBody3D" parent="." unique_id=782944268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 1, -24)
 script = ExtResource("4_bike")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Bike"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Bike" unique_id=1033126759]
 shape = SubResource("BoxShape_bike")
 
-[node name="Frame" type="MeshInstance3D" parent="Bike"]
-position = Vector3(0, 0.65, 0)
+[node name="Frame" type="MeshInstance3D" parent="Bike" unique_id=263905085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
 mesh = SubResource("BoxMesh_bike_body")
 
-[node name="WheelFront" type="MeshInstance3D" parent="Bike"]
-position = Vector3(0, 0.35, -0.95)
-rotation_degrees = Vector3(90, 0, 0)
+[node name="WheelFront" type="MeshInstance3D" parent="Bike" unique_id=1989331231]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.35, -0.95)
 mesh = SubResource("CylinderMesh_wheel")
 
-[node name="WheelRear" type="MeshInstance3D" parent="Bike"]
-position = Vector3(0, 0.35, 0.95)
-rotation_degrees = Vector3(90, 0, 0)
+[node name="WheelRear" type="MeshInstance3D" parent="Bike" unique_id=267199859]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.35, 0.95)
 mesh = SubResource("CylinderMesh_wheel")
 
-[node name="CameraPivot" type="Node3D" parent="Bike"]
-position = Vector3(0, 1.4, 0)
-rotation_degrees = Vector3(-10, 0, 0)
+[node name="CameraPivot" type="Node3D" parent="Bike" unique_id=1999675969]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 1.4, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="Bike/CameraPivot"]
+[node name="SpringArm3D" type="SpringArm3D" parent="Bike/CameraPivot" unique_id=732912231]
 spring_length = 7.0
 margin = 0.2
 
-[node name="Camera3D" type="Camera3D" parent="Bike/CameraPivot/SpringArm3D"]
-current = false
+[node name="Camera3D" type="Camera3D" parent="Bike/CameraPivot/SpringArm3D" unique_id=1326126559]
 fov = 78.0
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1762261846]
 
-[node name="HUD" type="Control" parent="CanvasLayer"]
+[node name="HUD" type="Control" parent="CanvasLayer" unique_id=1484865061]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -185,13 +241,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MissionPanel" type="Panel" parent="CanvasLayer/HUD"]
+[node name="MissionPanel" type="Panel" parent="CanvasLayer/HUD" unique_id=623416258]
+layout_mode = 0
 offset_left = 14.0
 offset_top = 14.0
 offset_right = 360.0
 offset_bottom = 114.0
 
-[node name="MissionLabel" type="Label" parent="CanvasLayer/HUD/MissionPanel"]
+[node name="MissionLabel" type="Label" parent="CanvasLayer/HUD/MissionPanel" unique_id=2067324609]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 12.0
@@ -200,13 +257,14 @@ offset_bottom = 88.0
 theme_override_font_sizes/font_size = 18
 text = "Görev"
 
-[node name="StatsPanel" type="Panel" parent="CanvasLayer/HUD"]
+[node name="StatsPanel" type="Panel" parent="CanvasLayer/HUD" unique_id=1050326661]
+layout_mode = 0
 offset_left = 14.0
 offset_top = 124.0
 offset_right = 220.0
 offset_bottom = 230.0
 
-[node name="StatsLabel" type="Label" parent="CanvasLayer/HUD/StatsPanel"]
+[node name="StatsLabel" type="Label" parent="CanvasLayer/HUD/StatsPanel" unique_id=704860319]
 layout_mode = 0
 offset_left = 12.0
 offset_top = 10.0
@@ -215,45 +273,61 @@ offset_bottom = 94.0
 theme_override_font_sizes/font_size = 16
 text = "İstatistik"
 
-[node name="InfoLabel" type="Label" parent="CanvasLayer/HUD"]
+[node name="InfoLabel" type="Label" parent="CanvasLayer/HUD" unique_id=1953885957]
+layout_mode = 0
 offset_left = 340.0
 offset_top = 18.0
 offset_right = 1120.0
 offset_bottom = 52.0
-horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
 text = "Bilgi"
+horizontal_alignment = 1
 
-[node name="VirtualJoystick" type="Control" parent="CanvasLayer/HUD"]
+[node name="VirtualJoystick" type="Control" parent="CanvasLayer/HUD" unique_id=13349524]
+anchors_preset = 0
 offset_left = 28.0
 offset_top = 508.0
 offset_right = 188.0
 offset_bottom = 668.0
 script = ExtResource("5_joy")
 
-[node name="Buttons" type="VBoxContainer" parent="CanvasLayer/HUD"]
+[node name="Buttons" type="VBoxContainer" parent="CanvasLayer/HUD" unique_id=1616122148]
+layout_mode = 0
 offset_left = 1074.0
 offset_top = 414.0
 offset_right = 1246.0
 offset_bottom = 688.0
 theme_override_constants/separation = 10
 
-[node name="InteractButton" type="Button" parent="CanvasLayer/HUD/Buttons"]
+[node name="InteractButton" type="Button" parent="CanvasLayer/HUD/Buttons" unique_id=864562894]
 custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
 text = "Etkileşim"
 
-[node name="JumpButton" type="Button" parent="CanvasLayer/HUD/Buttons"]
+[node name="JumpButton" type="Button" parent="CanvasLayer/HUD/Buttons" unique_id=47606768]
 custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
 text = "Zıpla"
 
-[node name="LightAttackButton" type="Button" parent="CanvasLayer/HUD/Buttons"]
+[node name="LightAttackButton" type="Button" parent="CanvasLayer/HUD/Buttons" unique_id=922176574]
 custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
 text = "Hafif Saldırı"
 
-[node name="HeavyAttackButton" type="Button" parent="CanvasLayer/HUD/Buttons"]
+[node name="HeavyAttackButton" type="Button" parent="CanvasLayer/HUD/Buttons" unique_id=666518614]
 custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
 text = "Güçlü Saldırı"
 
-[node name="StyleButton" type="Button" parent="CanvasLayer/HUD/Buttons"]
+[node name="StyleButton" type="Button" parent="CanvasLayer/HUD/Buttons" unique_id=1878718834]
 custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
 text = "Stil Değiştir"
+
+[node name="Terrain3D" type="Terrain3D" parent="." unique_id=1616072608]
+data_directory = "res://terrain_data/main_world"
+material = SubResource("Terrain3DMaterial_5vw27")
+assets = SubResource("Terrain3DAssets_efxa6")
+show_checkered = true
+top_level = true
+metadata/_edit_lock_ = true
