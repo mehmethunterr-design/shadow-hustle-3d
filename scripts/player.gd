@@ -7,6 +7,7 @@ const RIG_SCENE := preload("res://scenes/player/character_rig.tscn")
 @export var acceleration := 26.0
 @export var jump_velocity := 7.2
 @export var mouse_sensitivity := 0.0025
+@export var turn_speed := 12.0
 @export var max_health := 140
 @export var max_stamina := 100.0
 
@@ -27,6 +28,8 @@ var dash_timer := 0.0
 var dash_cooldown := 0.0
 var invulnerable_timer := 0.0
 var dash_direction := Vector3.ZERO
+var camera_yaw := 0.0
+var camera_pitch := deg_to_rad(-12.0)
 var previous := {"jump": false, "style": false, "light": false, "heavy": false, "dash": false}
 
 var styles := [
@@ -45,6 +48,8 @@ func _ready() -> void:
 		var node := get_node_or_null(old_visual)
 		if node is VisualInstance3D:
 			node.visible = false
+	camera_yaw = camera_pivot.rotation.y
+	camera_pitch = camera_pivot.rotation.x
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_update_style()
 	call_deferred("_resolve_world")
@@ -56,9 +61,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not enabled:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		camera_pivot.rotate_x(-event.relative.y * mouse_sensitivity)
-		camera_pivot.rotation.x = clamp(camera_pivot.rotation.x, deg_to_rad(-50.0), deg_to_rad(30.0))
+		camera_yaw -= event.relative.x * mouse_sensitivity
+		camera_pitch -= event.relative.y * mouse_sensitivity
+		camera_pitch = clamp(camera_pitch, deg_to_rad(-55.0), deg_to_rad(28.0))
+		camera_pivot.rotation = Vector3(camera_pitch, camera_yaw, 0.0)
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseButton and event.pressed:
@@ -96,8 +102,9 @@ func _physics_process(delta: float) -> void:
 		_show("Dövüş stili: %s" % styles[style_index]["name"])
 
 	var input_vector := _move_input()
-	var direction := (transform.basis * Vector3(input_vector.x, 0.0, input_vector.y)).normalized()
+	var direction := _camera_relative_direction(input_vector)
 	var speed: float = (sprint_speed if Input.is_key_pressed(KEY_SHIFT) else move_speed) * styles[style_index]["speed"]
+
 	if (_just("dash", dash_now) or _consume_ui("dash")) and dash_cooldown <= 0.0 and stamina >= 22.0:
 		_start_dash(direction)
 
@@ -107,6 +114,8 @@ func _physics_process(delta: float) -> void:
 	elif direction != Vector3.ZERO:
 		velocity.x = move_toward(velocity.x, direction.x * speed, acceleration * delta)
 		velocity.z = move_toward(velocity.z, direction.z * speed, acceleration * delta)
+		var target_yaw := atan2(-direction.x, -direction.z)
+		rotation.y = lerp_angle(rotation.y, target_yaw, min(turn_speed * delta, 1.0))
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
 		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
@@ -121,6 +130,16 @@ func _physics_process(delta: float) -> void:
 	if rig and rig.has_method("set_locomotion"):
 		rig.set_locomotion(Vector2(velocity.x, velocity.z).length(), is_on_floor())
 	previous = {"jump": jump_now, "style": style_now, "light": light_now, "heavy": heavy_now, "dash": dash_now}
+
+func _camera_relative_direction(input_vector: Vector2) -> Vector3:
+	if input_vector == Vector2.ZERO:
+		return Vector3.ZERO
+	var yaw_basis := Basis(Vector3.UP, camera_yaw)
+	var forward := -yaw_basis.z
+	var right := yaw_basis.x
+	var direction := right * input_vector.x + forward * -input_vector.y
+	direction.y = 0.0
+	return direction.normalized()
 
 func _move_input() -> Vector2:
 	var v := Vector2.ZERO
