@@ -1,7 +1,11 @@
 [application]
 
 config/name="Shadow Hustle 3D Open World"
-run/main_scene="res://main.tscn"
+run/main_scene="res://menu.tscn"
+
+[autoload]
+
+PauseManager="*res://scripts/pause_manager.gd"
 
 [display]
 
