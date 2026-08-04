@@ -7,14 +7,14 @@ extends Node3D
 @onready var fallback_body: Node3D = $FallbackNinja
 @onready var attack_flash: MeshInstance3D = $AttackFlash
 
-var skeleton: Skeleton3D
-var animation_player: AnimationPlayer
+var skeleton: Skeleton3D = null
+var animation_player: AnimationPlayer = null
 var available_animations: PackedStringArray = []
 var locomotion_speed: float = 0.0
 var is_attacking: bool = false
 var attack_time: float = 0.0
 var current_style: String = "Shadow"
-var base_rotation: Vector3
+var base_rotation: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	imported_model.scale = Vector3.ONE * model_scale
@@ -23,7 +23,7 @@ func _ready() -> void:
 	_find_rig_nodes(imported_model)
 	fallback_body.visible = not _has_visible_mesh(imported_model)
 	attack_flash.visible = false
-	if animation_player:
+	if animation_player != null:
 		available_animations = animation_player.get_animation_list()
 	_play_first_matching(["idle", "Idle", "IDLE"])
 
@@ -31,8 +31,8 @@ func _process(delta: float) -> void:
 	if is_attacking:
 		attack_time -= delta
 		attack_flash.visible = true
-		attack_flash.scale = Vector3.ONE * (1.0 + max(attack_time, 0.0) * 1.6)
-		attack_flash.transparency = clamp(1.0 - attack_time * 3.0, 0.15, 0.9)
+		attack_flash.scale = Vector3.ONE * (1.0 + maxf(attack_time, 0.0) * 1.6)
+		attack_flash.transparency = clampf(1.0 - attack_time * 3.0, 0.15, 0.9)
 		if attack_time <= 0.0:
 			is_attacking = false
 			attack_flash.visible = false
@@ -40,7 +40,9 @@ func _process(delta: float) -> void:
 		_update_locomotion_animation()
 
 	if fallback_body.visible and not is_attacking:
-		var bob := sin(Time.get_ticks_msec() * 0.009) * min(locomotion_speed / 10.0, 1.0) * 0.06
+		var time_value: float = float(Time.get_ticks_msec()) * 0.009
+		var movement_factor: float = minf(locomotion_speed / 10.0, 1.0)
+		var bob: float = sin(time_value) * movement_factor * 0.06
 		fallback_body.position.y = bob
 
 func set_locomotion(speed: float, on_floor: bool) -> void:
@@ -78,10 +80,13 @@ func play_dash() -> void:
 	_play_first_matching(["dash", "Dash", "roll", "Roll"], true)
 
 func modulate_fallback(body_color: Color, accent_color: Color) -> void:
-	for node in fallback_body.find_children("*", "MeshInstance3D", true, false):
-		var mesh_node := node as MeshInstance3D
-		var material := StandardMaterial3D.new()
-		material.albedo_color = accent_color if "Accent" in mesh_node.name or "Eye" in mesh_node.name else body_color
+	for node: Node in fallback_body.find_children("*", "MeshInstance3D", true, false):
+		var mesh_node: MeshInstance3D = node as MeshInstance3D
+		if mesh_node == null:
+			continue
+		var material: StandardMaterial3D = StandardMaterial3D.new()
+		var is_accent: bool = mesh_node.name.contains("Accent") or mesh_node.name.contains("Eye")
+		material.albedo_color = accent_color if is_accent else body_color
 		material.metallic = 0.15
 		material.roughness = 0.62
 		mesh_node.material_override = material
@@ -99,7 +104,7 @@ func _update_locomotion_animation() -> void:
 func _play_first_matching(candidates: Array[String], restart: bool = false) -> void:
 	if animation_player == null:
 		return
-	for candidate in candidates:
+	for candidate: String in candidates:
 		if animation_player.has_animation(candidate):
 			if restart or animation_player.current_animation != candidate:
 				animation_player.play(candidate, 0.12)
@@ -110,13 +115,13 @@ func _find_rig_nodes(node: Node) -> void:
 		skeleton = node as Skeleton3D
 	if node is AnimationPlayer and animation_player == null:
 		animation_player = node as AnimationPlayer
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		_find_rig_nodes(child)
 
 func _has_visible_mesh(node: Node) -> bool:
 	if node is MeshInstance3D:
 		return true
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		if _has_visible_mesh(child):
 			return true
 	return false
