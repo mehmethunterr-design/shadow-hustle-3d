@@ -1,118 +1,125 @@
 extends Node3D
 
-@export var model_scale: float = 0.01
-@export var model_y_offset: float = 0.0
+@onready var imported_model = $ImportedSkeleton
+@onready var fallback_body = $FallbackNinja
+@onready var attack_flash = $AttackFlash
+@onready var left_arm = $FallbackNinja/LeftArmPivot
+@onready var right_arm = $FallbackNinja/RightArmPivot
+@onready var left_leg = $FallbackNinja/LeftLegPivot
+@onready var right_leg = $FallbackNinja/RightLegPivot
+@onready var scarf = $FallbackNinja/Scarf
 
-@onready var imported_model: Node3D = $ImportedSkeleton
-@onready var fallback_body: Node3D = $FallbackNinja
-@onready var attack_flash: MeshInstance3D = $AttackFlash
-
-var skeleton: Skeleton3D = null
-var animation_player: AnimationPlayer = null
-var locomotion_speed: float = 0.0
-var is_attacking: bool = false
-var attack_time: float = 0.0
-var current_style: String = "Shadow"
+var animation_player = null
+var locomotion_speed = 0.0
+var attack_time = 0.0
+var attack_heavy = false
+var attack_combo = 1
+var current_style = "Shadow"
 
 func _ready() -> void:
-	imported_model.scale = Vector3.ONE * model_scale
-	imported_model.position.y = model_y_offset
-	_find_rig_nodes(imported_model)
-	fallback_body.visible = not _has_visible_mesh(imported_model)
+	# FBX şu an yalnızca iskelet referansı olarak tutuluyor.
+	# Görünür ve özgün ninja modeli her koşulda aktif kalır.
+	imported_model.visible = false
+	fallback_body.visible = true
 	attack_flash.visible = false
-	_play_first_matching(["idle", "Idle", "IDLE"])
+	_find_animation_player(imported_model)
+	set_style("Shadow")
 
 func _process(delta: float) -> void:
-	if is_attacking:
+	var time_value = Time.get_ticks_msec() * 0.001
+	var walk_strength = clamp(locomotion_speed / 8.0, 0.0, 1.0)
+
+	if attack_time > 0.0:
 		attack_time -= delta
-		attack_flash.visible = true
-		attack_flash.scale = Vector3.ONE * (1.0 + max(attack_time, 0.0) * 1.6)
-		attack_flash.transparency = clamp(1.0 - attack_time * 3.0, 0.15, 0.9)
-		if attack_time <= 0.0:
-			is_attacking = false
-			attack_flash.visible = false
+		_update_attack_pose()
 	else:
-		_update_locomotion_animation()
+		_update_walk_pose(time_value, walk_strength)
+		attack_flash.visible = false
 
-	if fallback_body.visible and not is_attacking:
-		var bob: float = sin(Time.get_ticks_msec() * 0.009) * min(locomotion_speed / 10.0, 1.0) * 0.06
-		fallback_body.position.y = bob
+	scarf.rotation.z = sin(time_value * 4.0) * 0.10 + walk_strength * 0.08
 
-func set_locomotion(speed: float, on_floor: bool) -> void:
+func set_locomotion(speed: float, _on_floor: bool) -> void:
 	locomotion_speed = speed
-	if not on_floor:
-		_play_first_matching(["jump", "Jump", "fall", "Fall"])
 
 func set_style(style_name: String) -> void:
 	current_style = style_name
-	match style_name:
-		"Shadow":
-			modulate_fallback(Color(0.07, 0.08, 0.11), Color(0.85, 0.08, 0.12))
-		"Street":
-			modulate_fallback(Color(0.12, 0.17, 0.22), Color(0.15, 0.65, 1.0))
-		"Heavy":
-			modulate_fallback(Color(0.18, 0.12, 0.10), Color(1.0, 0.48, 0.08))
+	var body_color = Color(0.045, 0.05, 0.07)
+	var accent_color = Color(0.90, 0.035, 0.055)
 
-func play_attack(combo_index: int, heavy: bool) -> void:
-	is_attacking = true
-	attack_time = 0.34 if heavy else 0.22
-	var candidates: Array[String] = []
-	if heavy:
-		candidates = ["heavy_attack", "HeavyAttack", "attack_heavy", "Attack_Heavy"]
-	else:
-		candidates = [
-			"light_attack_%d" % combo_index,
-			"attack_%d" % combo_index,
-			"Attack%d" % combo_index,
-			"attack",
-			"Attack"
-		]
-	_play_first_matching(candidates, true)
+	if style_name == "Street":
+		body_color = Color(0.07, 0.12, 0.18)
+		accent_color = Color(0.10, 0.62, 1.0)
+	elif style_name == "Heavy":
+		body_color = Color(0.16, 0.08, 0.045)
+		accent_color = Color(1.0, 0.42, 0.04)
 
-func play_dash() -> void:
-	_play_first_matching(["dash", "Dash", "roll", "Roll"], true)
-
-func modulate_fallback(body_color: Color, accent_color: Color) -> void:
 	for node in fallback_body.find_children("*", "MeshInstance3D", true, false):
-		var mesh_node := node as MeshInstance3D
-		var material := StandardMaterial3D.new()
-		var is_accent: bool = mesh_node.name.contains("Accent") or mesh_node.name.contains("Eye")
-		material.albedo_color = accent_color if is_accent else body_color
-		material.metallic = 0.15
-		material.roughness = 0.62
+		var mesh_node = node as MeshInstance3D
+		var material = StandardMaterial3D.new()
+		var accent = mesh_node.name.contains("Accent") or mesh_node.name.contains("Eye") or mesh_node.name.contains("Blade")
+		material.albedo_color = accent_color if accent else body_color
+		material.metallic = 0.18
+		material.roughness = 0.55
+		if accent:
+			material.emission_enabled = true
+			material.emission = accent_color * 0.65
+			material.emission_energy_multiplier = 1.8
 		mesh_node.material_override = material
 
-func _update_locomotion_animation() -> void:
-	if is_attacking or animation_player == null:
-		return
-	if locomotion_speed > 8.5:
-		_play_first_matching(["run", "Run", "RUN"])
-	elif locomotion_speed > 0.4:
-		_play_first_matching(["walk", "Walk", "WALK"])
-	else:
-		_play_first_matching(["idle", "Idle", "IDLE"])
+func play_attack(combo_index: int, heavy: bool) -> void:
+	attack_combo = combo_index
+	attack_heavy = heavy
+	attack_time = 0.38 if heavy else 0.25
+	attack_flash.visible = true
 
-func _play_first_matching(candidates: Array[String], restart: bool = false) -> void:
+	if animation_player != null:
+		_play_matching_animation(combo_index, heavy)
+
+func play_dash() -> void:
+	left_arm.rotation.x = -0.8
+	right_arm.rotation.x = -0.8
+	left_leg.rotation.x = 0.45
+	right_leg.rotation.x = 0.45
+
+func _update_walk_pose(time_value: float, strength: float) -> void:
+	var swing = sin(time_value * 9.0) * 0.65 * strength
+	left_arm.rotation.x = swing
+	right_arm.rotation.x = -swing
+	left_leg.rotation.x = -swing
+	right_leg.rotation.x = swing
+	fallback_body.position.y = abs(sin(time_value * 9.0)) * 0.045 * strength
+
+func _update_attack_pose() -> void:
+	var progress = 1.0 - clamp(attack_time / (0.38 if attack_heavy else 0.25), 0.0, 1.0)
+	var arc = sin(progress * PI)
+	if attack_heavy:
+		right_arm.rotation.x = -1.5 + arc * 2.7
+		left_arm.rotation.x = -1.1 + arc * 1.8
+	else:
+		if attack_combo % 2 == 0:
+			left_arm.rotation.x = -1.1 + arc * 2.4
+			right_arm.rotation.x = 0.35
+		else:
+			right_arm.rotation.x = -1.1 + arc * 2.4
+			left_arm.rotation.x = 0.35
+	attack_flash.scale = Vector3(0.9 + arc * 1.4, 0.28 + arc * 0.24, 1.2 + arc * 1.8)
+
+func _find_animation_player(node: Node) -> void:
+	if node is AnimationPlayer:
+		animation_player = node
+		return
+	for child in node.get_children():
+		_find_animation_player(child)
+
+func _play_matching_animation(combo_index: int, heavy: bool) -> void:
 	if animation_player == null:
 		return
-	for candidate in candidates:
-		if animation_player.has_animation(candidate):
-			if restart or animation_player.current_animation != candidate:
-				animation_player.play(candidate, 0.12)
+	var names = []
+	if heavy:
+		names = ["heavy_attack", "HeavyAttack", "attack_heavy"]
+	else:
+		names = ["light_attack_%d" % combo_index, "attack_%d" % combo_index, "attack", "Attack"]
+	for anim_name in names:
+		if animation_player.has_animation(anim_name):
+			animation_player.play(anim_name)
 			return
-
-func _find_rig_nodes(node: Node) -> void:
-	if node is Skeleton3D and skeleton == null:
-		skeleton = node as Skeleton3D
-	if node is AnimationPlayer and animation_player == null:
-		animation_player = node as AnimationPlayer
-	for child in node.get_children():
-		_find_rig_nodes(child)
-
-func _has_visible_mesh(node: Node) -> bool:
-	if node is MeshInstance3D:
-		return true
-	for child in node.get_children():
-		if _has_visible_mesh(child):
-			return true
-	return false
