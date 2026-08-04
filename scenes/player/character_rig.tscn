@@ -1,7 +1,7 @@
 [gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/character_rig.gd" id="1_rig"]
-[ext_resource type="PackedScene" path="res://SM_Human_Skeleton.fbx" id="2_skeleton"]
+[ext_resource type="PackedScene" path="res://addons/kaykit_character_pack_adventures/Characters/gltf/Rogue.glb" id="2_rogue"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 radius = 0.43
@@ -51,9 +51,11 @@ emission_energy_multiplier = 2.4
 [node name="CharacterRig" type="Node3D"]
 script = ExtResource("1_rig")
 
-[node name="ImportedSkeleton" parent="." instance=ExtResource("2_skeleton")]
+[node name="ImportedSkeleton" parent="." instance=ExtResource("2_rogue")]
+rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FallbackNinja" type="Node3D" parent="."]
+visible = false
 
 [node name="Body" type="MeshInstance3D" parent="FallbackNinja"]
 position = Vector3(0, 0.82, 0)
