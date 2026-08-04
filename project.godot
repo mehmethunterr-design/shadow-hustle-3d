@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.7")
 [autoload]
 
 PauseManager="*res://scripts/pause_manager.gd"
+OpenWorldBuilder="*res://scripts/open_world_builder.gd"
 
 [display]
 
