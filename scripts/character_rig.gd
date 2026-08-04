@@ -12,6 +12,7 @@ var current_locomotion: StringName = &""
 
 func _ready() -> void:
 	imported_model.visible = true
+	imported_model.position.y = -0.48
 	fallback_body.visible = false
 	attack_flash.visible = false
 	animation_player = _find_animation_player(imported_model)
