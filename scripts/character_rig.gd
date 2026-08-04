@@ -4,63 +4,114 @@ extends Node3D
 @onready var fallback_body: Node3D = $FallbackNinja
 @onready var attack_flash: MeshInstance3D = $AttackFlash
 
+var animation_player: AnimationPlayer = null
 var locomotion_speed: float = 0.0
 var is_attacking: bool = false
-var attack_time: float = 0.0
 var current_style: String = "Shadow"
+var current_locomotion: StringName = &""
 
 func _ready() -> void:
-	# The imported skeleton asset is not a finished skinned character.
-	# Keep it hidden and always show the authored Shadow Ninja fallback.
-	imported_model.visible = false
-	fallback_body.visible = true
+	imported_model.visible = true
+	fallback_body.visible = false
 	attack_flash.visible = false
-	set_style("Shadow")
+	animation_player = _find_animation_player(imported_model)
+	_play_best(["idle"], true)
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if is_attacking:
-		attack_time -= delta
-		attack_flash.visible = true
-		attack_flash.scale = Vector3.ONE * (1.0 + max(attack_time, 0.0) * 1.6)
-		if attack_time <= 0.0:
-			is_attacking = false
-			attack_flash.visible = false
+		return
+	if locomotion_speed > 8.5:
+		_set_locomotion_animation(["running_a", "run", "running"])
+	elif locomotion_speed > 0.3:
+		_set_locomotion_animation(["walking_a", "walk", "walking"])
 	else:
-		var t: float = Time.get_ticks_msec() * 0.001
-		var amount: float = clamp(locomotion_speed / 8.0, 0.0, 1.0)
-		fallback_body.position.y = sin(t * 8.0) * 0.04 * amount
-		fallback_body.rotation.z = sin(t * 6.0) * 0.025 * amount
+		_set_locomotion_animation(["idle"])
+
+func _find_animation_player(root: Node) -> AnimationPlayer:
+	if root is AnimationPlayer:
+		return root as AnimationPlayer
+	for child: Node in root.get_children():
+		var found: AnimationPlayer = _find_animation_player(child)
+		if found != null:
+			return found
+	return null
+
+func _find_animation(keywords: Array[String]) -> StringName:
+	if animation_player == null:
+		return &""
+	var names: PackedStringArray = animation_player.get_animation_list()
+	for keyword: String in keywords:
+		var needle: String = keyword.to_lower()
+		for item: String in names:
+			if item.to_lower().contains(needle):
+				return StringName(item)
+	return &""
+
+func _play_best(keywords: Array[String], looped: bool = false, speed_scale: float = 1.0) -> bool:
+	if animation_player == null:
+		return false
+	var animation_name: StringName = _find_animation(keywords)
+	if animation_name == &"":
+		return false
+	var animation: Animation = animation_player.get_animation(animation_name)
+	if animation != null and looped:
+		animation.loop_mode = Animation.LOOP_LINEAR
+	animation_player.speed_scale = speed_scale
+	animation_player.play(animation_name, 0.12)
+	return true
+
+func _set_locomotion_animation(keywords: Array[String]) -> void:
+	var animation_name: StringName = _find_animation(keywords)
+	if animation_name == &"" or animation_name == current_locomotion:
+		return
+	current_locomotion = animation_name
+	var animation: Animation = animation_player.get_animation(animation_name)
+	if animation != null:
+		animation.loop_mode = Animation.LOOP_LINEAR
+	animation_player.speed_scale = 1.0
+	animation_player.play(animation_name, 0.16)
 
 func set_locomotion(speed: float, _on_floor: bool) -> void:
 	locomotion_speed = speed
 
 func set_style(style_name: String) -> void:
 	current_style = style_name
-	var body_color := Color(0.035, 0.04, 0.055)
-	var accent_color := Color(0.95, 0.035, 0.055)
-	if style_name == "Street":
-		body_color = Color(0.05, 0.08, 0.12)
-		accent_color = Color(0.1, 0.6, 1.0)
-	elif style_name == "Heavy":
-		body_color = Color(0.10, 0.055, 0.035)
-		accent_color = Color(1.0, 0.34, 0.04)
-	for node in fallback_body.find_children("*", "MeshInstance3D", true, false):
-		var mesh_node: MeshInstance3D = node as MeshInstance3D
-		var material := StandardMaterial3D.new()
-		var accent: bool = mesh_node.name.contains("Accent") or mesh_node.name.contains("Eye") or mesh_node.name.contains("Sword")
-		material.albedo_color = accent_color if accent else body_color
-		material.metallic = 0.28
-		material.roughness = 0.48
-		if accent:
-			material.emission_enabled = true
-			material.emission = accent_color
-			material.emission_energy_multiplier = 1.6
-		mesh_node.material_override = material
 
 func play_attack(combo_index: int, heavy: bool) -> void:
+	if animation_player == null:
+		return
 	is_attacking = true
-	attack_time = 0.36 if heavy else 0.22
-	fallback_body.rotation.y += deg_to_rad(16.0 if combo_index % 2 == 0 else -16.0)
+	current_locomotion = &""
+	var candidates: Array[String]
+	if heavy:
+		candidates = ["1h_melee_attack_chop", "attack_chop", "melee_attack"]
+	elif combo_index == 1:
+		candidates = ["1h_melee_attack_slice_horizontal", "attack_slice_horizontal", "attack_slice"]
+	elif combo_index == 2:
+		candidates = ["1h_melee_attack_slice_diagonal", "attack_slice_diagonal", "attack_slice"]
+	else:
+		candidates = ["1h_melee_attack_stab", "attack_stab", "melee_attack"]
+	if not _play_best(candidates, false, 1.1):
+		is_attacking = false
+		return
+	attack_flash.visible = true
+	var duration: float = 0.55
+	if animation_player.current_animation_length > 0.0:
+		duration = animation_player.current_animation_length / max(animation_player.speed_scale, 0.01)
+	await get_tree().create_timer(min(duration, 1.2)).timeout
+	attack_flash.visible = false
+	is_attacking = false
 
 func play_dash() -> void:
-	fallback_body.rotation.z = deg_to_rad(-12.0)
+	if animation_player == null:
+		return
+	is_attacking = true
+	current_locomotion = &""
+	if not _play_best(["dodge_forward", "dodge"], false, 1.2):
+		is_attacking = false
+		return
+	var duration: float = 0.45
+	if animation_player.current_animation_length > 0.0:
+		duration = animation_player.current_animation_length / max(animation_player.speed_scale, 0.01)
+	await get_tree().create_timer(min(duration, 0.8)).timeout
+	is_attacking = false
